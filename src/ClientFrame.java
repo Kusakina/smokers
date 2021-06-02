@@ -4,6 +4,10 @@ import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class ClientFrame extends JFrame {
     private JTextArea console = new JTextArea();
@@ -45,25 +49,42 @@ public class ClientFrame extends JFrame {
         JTextField textField = new JTextField();
         textField.setColumns(20);
         JButton button = new JButton("Send number");
-        button.addActionListener(actionEvent -> {
-            if (!sent) {
-                String value = textField.getText();
-                try {
-                    int n = Integer.parseInt(value);
-                    if(n<3 || n>10){
-                        throw new IllegalArgumentException("Number must be in range [3, 10]\n");
+        try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
+             FileChannel fileChannel = fileOutputStream.getChannel();
+             PrintWriter out2 = new PrintWriter(fileOutputStream)) {
+            button.addActionListener(actionEvent -> {
+                if (!sent) {
+                    String value = textField.getText();
+                    try {
+                        int n = Integer.parseInt(value);
+                        if(n<3 || n>10){
+                            throw new IllegalArgumentException("Number must be in range [3, 10]\n");
+                        }
+                        print("Sending "+ value+"\n");
+                        out.write(value + "\n");
+                        out.flush();
+                        sent = true;
+                        while (true) {
+                            try (FileLock lock = fileChannel.tryLock()) {
+                                if (null == lock) continue;
+
+                                LocalDateTime dateTime = LocalDateTime.now();
+                                String logDatePattern = "dd.MM.yyyy HH:mm:ss";
+                                DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
+                                out2.print(logDateFormatter.format(dateTime) + ": " + value +" smokers were created");
+                                break;
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        print("Invalid value format. Enter only digits\n");
+                    } catch (Exception e) {
+                        print(e.getMessage()+"\n");
                     }
-                    print("Sending "+ value+"\n");
-                    out.write(value + "\n");
-                    out.flush();
-                    sent = true;
-                } catch (NumberFormatException e) {
-                    print("Invalid value format. Enter only digits\n");
-                } catch (Exception e) {
-                    print(e.getMessage()+"\n");
-                }
-            } else print("Number already sent.\n");
-        });
+                } else print("Number already sent.\n");
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         numberPanel.add(textField);
         numberPanel.add(button);

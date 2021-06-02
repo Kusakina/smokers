@@ -14,22 +14,23 @@ public class SmokerThread extends Thread {
     private static int count = 1;
     private final int id;
     BufferedWriter out;
-    public static final int SMOKING_TIME =4000;
-    public static final int SLEEP_TIME =6000;
-    Random random =new Random();
+    public static final int SMOKING_TIME = 4000;
+    public static final int SLEEP_TIME = 6000;
+    Random random = new Random();
     Typerecoder typeRecorder = new Typerecoder();
-    public SmokerThread(SmokingObject object, BufferedWriter out){
 
-        this.object =object;
+    public SmokerThread(SmokingObject object, BufferedWriter out) {
+
+        this.object = object;
         this.out = out;
-        if(count<=3){
+        if (count <= 3) {
             necessaryObjectType = count;
-        } else{
+        } else {
 
-            necessaryObjectType = random.nextInt(3)+1;
+            necessaryObjectType = random.nextInt(3) + 1;
         }
         id = count++;
-        System.out.println("Smoker"+id+" created he has " + typeRecorder.getSmokerThings(necessaryObjectType));
+        System.out.println("Smoker" + id + " created he has " + typeRecorder.getSmokerThings(necessaryObjectType));
         try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
              FileChannel fileChannel = fileOutputStream.getChannel();
              PrintWriter out2 = new PrintWriter(fileOutputStream)) {
@@ -43,31 +44,32 @@ public class SmokerThread extends Thread {
                         LocalDateTime dateTime = LocalDateTime.now();
                         String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                         DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                        out2.print(logDateFormatter.format(dateTime) + ": " + "New Object was given! On table "+ typeRecorder.getDealerThings(object.getType())+"\n" );
+                        out2.print(logDateFormatter.format(dateTime) + ": " + "New Object was given! On table " + typeRecorder.getDealerThings(object.getType()) + "\n");
                         break;
                     }
                 }
 
-            }catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
 
         } catch (IOException e) {
-        e.printStackTrace();
+            e.printStackTrace();
+        }
     }
 
-    public void run(){
-        while (true){
+    public void run() {
+        while (true) {
             object.acquire();
             try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
                  FileChannel fileChannel = fileOutputStream.getChannel();
                  PrintWriter out2 = new PrintWriter(fileOutputStream)) {
-                if(object.getType()==necessaryObjectType){
+                if (object.getType() == necessaryObjectType) {
                     object.setType(0);
                     try {
-                        out.write("Smoker "+id + " Oyyy, I need it, because I have "+ typeRecorder.getSmokerThings(necessaryObjectType) + "\n");
+                        out.write("Smoker " + id + " Oyyy, I need it, because I have " + typeRecorder.getSmokerThings(necessaryObjectType) + "\n");
                         out.flush();
-                        out.write("Smoker "+id + " is smoking\n");
+                        out.write("Smoker " + id + " is smoking\n");
                         out.flush();
 
                         while (true) {
@@ -77,14 +79,14 @@ public class SmokerThread extends Thread {
                                 LocalDateTime dateTime = LocalDateTime.now();
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker "+id + " is smoking\n");
+                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id +" with"+typeRecorder.getSmokerThings(necessaryObjectType) + " is smoking\n");
                                 break;
                             }
                         }
 
-                        System.out.println("Smoker "+id + " is smoking");
+                        System.out.println("Smoker " + id + " is smoking");
                         sleep(SMOKING_TIME);
-                        out.write("Smoker "+id + " stopped smoking\n");
+                        out.write("Smoker " + id + " stopped smoking\n");
                         out.flush();
 
                         while (true) {
@@ -94,7 +96,7 @@ public class SmokerThread extends Thread {
                                 LocalDateTime dateTime = LocalDateTime.now();
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker "+id + " stopped smoking\n");
+                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id + " stopped smoking\n");
                                 break;
                             }
                         }
@@ -109,7 +111,7 @@ public class SmokerThread extends Thread {
                                 LocalDateTime dateTime = LocalDateTime.now();
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker "+id + " is sleeping \n" );
+                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id + " is sleeping \n");
                                 break;
                             }
                         }
@@ -120,7 +122,7 @@ public class SmokerThread extends Thread {
                         object.release();
                         break;
                     }
-                }else {
+                } else {
                     object.release();
                 }
             } catch (IOException e) {
@@ -129,4 +131,5 @@ public class SmokerThread extends Thread {
         }
 
     }
+}
 
