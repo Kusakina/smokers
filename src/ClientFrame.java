@@ -49,10 +49,10 @@ public class ClientFrame extends JFrame {
         JTextField textField = new JTextField();
         textField.setColumns(20);
         JButton button = new JButton("Send number");
-        try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
-             FileChannel fileChannel = fileOutputStream.getChannel();
-             PrintWriter out2 = new PrintWriter(fileOutputStream)) {
-            button.addActionListener(actionEvent -> {
+        button.addActionListener(actionEvent -> {
+            try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
+                 FileChannel fileChannel = fileOutputStream.getChannel();
+                 PrintWriter out2 = new PrintWriter(fileOutputStream)) {
                 if (!sent) {
                     String value = textField.getText();
                     try {
@@ -63,7 +63,6 @@ public class ClientFrame extends JFrame {
                         print("Sending "+ value+"\n");
                         out.write(value + "\n");
                         out.flush();
-                        sent = true;
                         while (true) {
                             try (FileLock lock = fileChannel.tryLock()) {
                                 if (null == lock) continue;
@@ -72,19 +71,23 @@ public class ClientFrame extends JFrame {
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
                                 out2.print(logDateFormatter.format(dateTime) + ": " + value +" smokers were created");
+                                out2.flush();
                                 break;
                             }
                         }
+                        sent = true;
+
                     } catch (NumberFormatException e) {
                         print("Invalid value format. Enter only digits\n");
                     } catch (Exception e) {
                         print(e.getMessage()+"\n");
                     }
                 } else print("Number already sent.\n");
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        });
 
         numberPanel.add(textField);
         numberPanel.add(button);

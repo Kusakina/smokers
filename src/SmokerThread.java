@@ -45,6 +45,7 @@ public class SmokerThread extends Thread {
                         String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                         DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
                         out2.print(logDateFormatter.format(dateTime) + ": " + "New Object was given! On table " + typeRecorder.getDealerThings(object.getType()) + "\n");
+                        out2.flush();
                         break;
                     }
                 }
@@ -80,6 +81,7 @@ public class SmokerThread extends Thread {
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
                                 out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id +" with"+typeRecorder.getSmokerThings(necessaryObjectType) + " is smoking\n");
+                                out2.flush();
                                 break;
                             }
                         }
@@ -97,6 +99,7 @@ public class SmokerThread extends Thread {
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
                                 out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id + " stopped smoking\n");
+                                out2.flush();
                                 break;
                             }
                         }
@@ -112,6 +115,7 @@ public class SmokerThread extends Thread {
                                 String logDatePattern = "dd.MM.yyyy HH:mm:ss";
                                 DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
                                 out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id + " is sleeping \n");
+                                out2.flush();
                                 break;
                             }
                         }
