@@ -11,60 +11,43 @@ import java.util.Random;
 public class SmokerThread extends Thread {
     private final int necessaryObjectType;
     private SmokingObject object;
-    private static int count = 1;
     private final int id;
     BufferedWriter out;
     public static final int SMOKING_TIME = 4000;
     public static final int SLEEP_TIME = 6000;
     Random random = new Random();
-    Typerecoder typeRecorder = new Typerecoder();
+    TypeRecoder typeRecorder = new TypeRecoder();
+    PrintWriter log;
 
-    public SmokerThread(SmokingObject object, BufferedWriter out) {
+    public SmokerThread(SmokingObject object, BufferedWriter out, PrintWriter log, int id) {
+        this.log = log;
 
         this.object = object;
         this.out = out;
-        if (count <= 3) {
-            necessaryObjectType = count;
+        if (id <= 3) {
+            necessaryObjectType = id;
         } else {
-
             necessaryObjectType = random.nextInt(3) + 1;
         }
-        id = count++;
-        System.out.println("Smoker" + id + " created he has " + typeRecorder.getSmokerThings(necessaryObjectType));
-        try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
-             FileChannel fileChannel = fileOutputStream.getChannel();
-             PrintWriter out2 = new PrintWriter(fileOutputStream)) {
-            try {
-                this.out.write("Smoker" + id + " created, he has " + typeRecorder.getSmokerThings(necessaryObjectType) + "\n");
-                this.out.flush();
-                while (true) {
-                    try (FileLock lock = fileChannel.tryLock()) {
-                        if (null == lock) continue;
+        this.id = id;
+    }
 
-                        LocalDateTime dateTime = LocalDateTime.now();
-                        String logDatePattern = "dd.MM.yyyy HH:mm:ss";
-                        DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                        out2.print(logDateFormatter.format(dateTime) + ": " + "New Object was given! On table " + typeRecorder.getDealerThings(object.getType()) + "\n");
-                        out2.flush();
-                        break;
-                    }
-                }
+    public void run() {
+        try (var fos = new FileOutputStream("log.txt", true);
+             var log = new PrintWriter(fos)) {
+            String createMessage = "Smoker " + id + " created he has " + typeRecorder.getSmokerThings(necessaryObjectType);
+            System.out.println(createMessage);
+            LogUtils.printWithLock(log, createMessage);
+            try {
+                this.out.write(createMessage + "\n");
+                this.out.flush();
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void run() {
-        while (true) {
-            object.acquire();
-            try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
-                 FileChannel fileChannel = fileOutputStream.getChannel();
-                 PrintWriter out2 = new PrintWriter(fileOutputStream)) {
+            while (true) {
+                object.acquire();
                 if (object.getType() == necessaryObjectType) {
                     object.setType(0);
                     try {
@@ -73,52 +56,20 @@ public class SmokerThread extends Thread {
                         out.write("Smoker " + id + " is smoking\n");
                         out.flush();
 
-                        while (true) {
-                            try (FileLock lock = fileChannel.tryLock()) {
-                                if (null == lock) continue;
-
-                                LocalDateTime dateTime = LocalDateTime.now();
-                                String logDatePattern = "dd.MM.yyyy HH:mm:ss";
-                                DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id +" with"+typeRecorder.getSmokerThings(necessaryObjectType) + " is smoking\n");
-                                out2.flush();
-                                break;
-                            }
-                        }
+                        LogUtils.printWithLock(log, "Smoker " + id + " with " + typeRecorder.getSmokerThings(necessaryObjectType) + " is smoking");
 
                         System.out.println("Smoker " + id + " is smoking");
                         sleep(SMOKING_TIME);
                         out.write("Smoker " + id + " stopped smoking\n");
                         out.flush();
 
-                        while (true) {
-                            try (FileLock lock = fileChannel.tryLock()) {
-                                if (null == lock) continue;
-
-                                LocalDateTime dateTime = LocalDateTime.now();
-                                String logDatePattern = "dd.MM.yyyy HH:mm:ss";
-                                DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id + " stopped smoking\n");
-                                out2.flush();
-                                break;
-                            }
-                        }
+                        LogUtils.printWithLock(log, "Smoker " + id + " stopped smoking");
 
                         object.release();
                         sleep(SLEEP_TIME);
 
-                        while (true) {
-                            try (FileLock lock = fileChannel.tryLock()) {
-                                if (null == lock) continue;
+                        LogUtils.printWithLock(log, "Smoker " + id + " is sleeping");
 
-                                LocalDateTime dateTime = LocalDateTime.now();
-                                String logDatePattern = "dd.MM.yyyy HH:mm:ss";
-                                DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + "Smoker " + id + " is sleeping \n");
-                                out2.flush();
-                                break;
-                            }
-                        }
                         //out.write("Smoker "+id + " waiting for "+typeRecorder.getDealerThings(necessaryObjectType)+"\n");
                         //out.flush();
                     } catch (Exception e) {
@@ -129,11 +80,10 @@ public class SmokerThread extends Thread {
                 } else {
                     object.release();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 }
 

@@ -11,15 +11,21 @@ public class Server {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
             String countString = in.readLine();
             System.out.println(countString);
-            if(countString!=null){
-                SmokingObject object = new SmokingObject();
-                new DealerThread(object, out).start();
-                int count = Integer.parseInt(countString);
-                for (int i = 0; i < count; i++) {
-                    new SmokerThread(object, out).start();
+            if (countString != null) {
+
+                try (var fos = new FileOutputStream("log.txt", true);
+                     var log = new PrintWriter(fos)) {
+                    int count = Integer.parseInt(countString);
+                    LogUtils.printToLog(log,count + " smokers were created");
+
+                    SmokingObject object = new SmokingObject();
+                    new DealerThread(object, out, log).start();
+                    for (int i = 0; i < count; i++) {
+                        new SmokerThread(object, out, log, i + 1).start();
+                    }
                 }
             }
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
 

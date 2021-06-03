@@ -16,6 +16,8 @@ public class ClientFrame extends JFrame {
     private boolean sent = false;
     private Receiver receiver;
     public ClientFrame(){
+        copyLog();
+
         initFrame();
         setVisible(true);
         try {
@@ -32,6 +34,21 @@ public class ClientFrame extends JFrame {
 //            print("test");
 //        }
     }
+
+    public void copyLog() {
+        File logFile = new File("log.txt");
+        if (logFile.exists()) {
+            try (BufferedReader in = new BufferedReader(new FileReader(logFile));
+                PrintWriter out = new PrintWriter("log_old.txt")) {
+                in.lines().forEach(out::println);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            logFile.delete();
+        }
+    }
+
     public BufferedReader getSocketReader() throws IOException{
         return new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
     }
@@ -50,43 +67,26 @@ public class ClientFrame extends JFrame {
         textField.setColumns(20);
         JButton button = new JButton("Send number");
         button.addActionListener(actionEvent -> {
-            try (FileOutputStream fileOutputStream = new FileOutputStream("log.txt");
-                 FileChannel fileChannel = fileOutputStream.getChannel();
-                 PrintWriter out2 = new PrintWriter(fileOutputStream)) {
-                if (!sent) {
-                    String value = textField.getText();
-                    try {
-                        int n = Integer.parseInt(value);
-                        if(n<3 || n>10){
-                            throw new IllegalArgumentException("Number must be in range [3, 10]\n");
-                        }
-                        print("Sending "+ value+"\n");
-                        out.write(value + "\n");
-                        out.flush();
-                        while (true) {
-                            try (FileLock lock = fileChannel.tryLock()) {
-                                if (null == lock) continue;
-
-                                LocalDateTime dateTime = LocalDateTime.now();
-                                String logDatePattern = "dd.MM.yyyy HH:mm:ss";
-                                DateTimeFormatter logDateFormatter = DateTimeFormatter.ofPattern(logDatePattern);
-                                out2.print(logDateFormatter.format(dateTime) + ": " + value +" smokers were created");
-                                out2.flush();
-                                break;
-                            }
-                        }
-                        sent = true;
-
-                    } catch (NumberFormatException e) {
-                        print("Invalid value format. Enter only digits\n");
-                    } catch (Exception e) {
-                        print(e.getMessage()+"\n");
+            if (!sent) {
+                String value = textField.getText();
+                try {
+                    int n = Integer.parseInt(value);
+                    if(n<3 || n>10){
+                        throw new IllegalArgumentException("Number must be in range [3, 10]\n");
                     }
-                } else print("Number already sent.\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                    print("Sending "+ value+"\n");
 
+                    out.write(value + "\n");
+                    out.flush();
+
+                    sent = true;
+
+                } catch (IllegalArgumentException e) {
+                    print("Invalid value format. Enter only digits\n");
+                } catch (Exception e) {
+                    print(e.getMessage()+"\n");
+                }
+            } else print("Number already sent.\n");
         });
 
         numberPanel.add(textField);

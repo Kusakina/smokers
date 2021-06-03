@@ -1,7 +1,7 @@
-public class Typerecoder {
+public class TypeRecoder {
    private String[] dealerThings = new String[3];
     private String[] smokerThing = new String[3];
-    public Typerecoder() {
+    public TypeRecoder() {
         dealerThings[0] = "matches and tobacco";
         dealerThings[1] = "paper and tobacco";
         dealerThings[2] = "matches and paper";
